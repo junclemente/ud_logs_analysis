@@ -30,34 +30,40 @@ def get_list_of_popular_authors():
     db.close()
 
 
-def sum_case():
+def get_percent_of_errors():
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
-
     c.execute("SELECT to_char(time, 'YYYY-MM-DD') as day_of_month, \
-              SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) as errors,\
-              COUNT(*) as total_hits, \
-              (SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) / \
-              COUNT(*) * 100) AS percentage \
+              ((SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) * 100)/ \
+              COUNT(*)) AS percentage \
               FROM log \
               GROUP BY day_of_month \
-              ORDER BY percentage DESC \
-              LIMIT 10;")
-
+              HAVING ((SUM(CASE WHEN status NOT LIKE '2%' \
+              THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1 \
+              ORDER BY percentage DESC;")
     return c.fetchall()
     db.close()
 
 
 def display_results_of_views(results):
-        for each in results:
-            print("* %s --- %s views" % each)
-        print("\n")
+    for each in results:
+        print("* {0} --- {1} views".format(*each))
+    print("\n")
 
 
 def display_results_of_errors(results):
+    if len(results) > 0:
+        if (len(results)) == 1:
+            print("There was a total of one day: ")
+        else:
+            print("There were a total of {} days: ".format(len(results)))
         for each in results:
-            print("* %s --- %s views" % each)
-        print("\n")
+            print("* Date: {date} {percent}% errors".format(date=each[0],
+                                                            percent=each[1]))
+    else:
+        print("There were no days that had 1 percent or greater "
+              "request errors.")
+    print("\n")
 
 
 def main():
@@ -67,8 +73,8 @@ def main():
     print("Who are the most popular article authors of all time?")
     display_results_of_views(get_list_of_popular_authors())
 
-    print("On which days did more than 1%% of requests lead to errors?")
-    display_results_of_errors(sum_case())
+    print("On which days did more than 1 percent of requests lead to errors?")
+    display_results_of_errors(get_percent_of_errors())
 
 
 main()
