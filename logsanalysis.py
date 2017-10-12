@@ -67,19 +67,8 @@ def main():
     print("Who are the most popular article authors of all time?")
     display_results_of_views(get_list_of_popular_authors())
 
-    print("On which days did more than 1% of requests lead to errors?")
+    print("On which days did more than 1%% of requests lead to errors?")
     display_results_of_errors(sum_case())
-    # print(request_errors())
-    # print(errors_log())
-    # results = sum_case()
-    # for each in results:
-    #     # print("%s \t %s" %each)
-    #     print(each)
-    # print(len(results))
-
-    # display_results(total_errors())
-    # display_results(total_hits())
-# questions()
 
 
 main()
