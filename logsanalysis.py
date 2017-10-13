@@ -6,6 +6,10 @@ DBNAME = "news"
 
 
 def get_list_of_popular_articles():
+    """Queries the database to get a list of article titles and the number of
+    times they have been viewed and orders the most popular articles at the top
+    in descending order.
+    """
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute("SELECT title, count(*) AS total_views \
@@ -19,6 +23,10 @@ def get_list_of_popular_articles():
 
 
 def get_list_of_popular_authors():
+    """Queries the database to return a list of authors and the total number of
+    times their articles have been viewed ordered in descending order with the
+    most popular author first.
+    """
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute("SELECT name, count(*) AS total_views \
@@ -31,27 +39,32 @@ def get_list_of_popular_authors():
 
 
 def get_percent_of_errors():
+    """Queries the database to calculate the percentage of errors versus the
+    total of requests per day.
+    """
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute("SELECT to_char(time, 'YYYY-MM-DD') as day_of_month, \
-              ((SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) * 100)/ \
-              COUNT(*)) AS percentage \
+              ((SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) * 100) \
+              / COUNT(*)) AS percentage \
               FROM log \
               GROUP BY day_of_month \
               HAVING ((SUM(CASE WHEN status NOT LIKE '2%' \
-              THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1 \
+                           THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1 \
               ORDER BY percentage DESC;")
     return c.fetchall()
     db.close()
 
 
 def display_results_of_views(results):
+    """Displays the results of article views."""
     for each in results:
         print("* {0} --- {1} views".format(*each))
     print("\n")
 
 
 def display_results_of_errors(results):
+    """Displays the results for percentage of errors."""
     if len(results) > 0:
         if (len(results)) == 1:
             print("There was a total of one day: ")
@@ -67,6 +80,9 @@ def display_results_of_errors(results):
 
 
 def main():
+    """Prints the question being answered and then calls the appropriate
+    function to query the answer.
+    """
     print("What are the most popular three articles of all time?")
     display_results_of_views(get_list_of_popular_articles())
 
@@ -77,4 +93,5 @@ def main():
     display_results_of_errors(get_percent_of_errors())
 
 
+# Call the main function to begin queries and calculations.
 main()
