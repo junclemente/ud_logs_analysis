@@ -71,8 +71,8 @@ def display_results_of_errors(results):
         else:
             print("There were a total of {} days: ".format(len(results)))
         for each in results:
-            print("* Date: {date} {percent}% errors".format(date=each[0],
-                                                            percent=each[1]))
+            print("* Date: {date} --- {percent}% errors"
+                  .format(date=each[0], percent=each[1]))
     else:
         print("There were no days that had 1 percent or greater "
               "request errors.")
