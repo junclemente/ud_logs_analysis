@@ -5,6 +5,23 @@ import psycopg2
 DBNAME = "news"
 
 
+def execute_query(query_param):
+    """Connects to and queries the database and returns a list of tuples.
+
+    Parameters
+    ----------
+    query_param: string
+        SQL query statement to be exectued
+
+    Returns
+    -------
+    result:
+        List of tuples
+
+    Raises
+    ------
+
+    """
 def get_list_of_popular_articles():
     """Queries the database to get a list of article titles and the number of
     times they have been viewed and orders the most popular articles at the top
@@ -18,9 +35,9 @@ def get_list_of_popular_articles():
               GROUP BY title \
               ORDER BY total_views DESC \
               LIMIT 3")
-    return c.fetchall()
+    result = c.fetchall()
     db.close()
-
+    return result
 
 def get_list_of_popular_authors():
     """Queries the database to return a list of authors and the total number of
