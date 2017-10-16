@@ -60,8 +60,12 @@ def get_percent_of_errors():
 
 def display_results_of_views(results):
     """Displays the results of article views."""
-    for each in results:
-        print("* {0} --- {1} views".format(*each))
+    if len(results) > 0:
+        for each in results:
+            print("* {0} --- {1} views".format(*each))
+        print("\n")
+    else:
+        print("There were no results that matched the query.")
     print("\n")
 
 
@@ -72,9 +76,9 @@ def display_results_of_errors(results):
             print("There was a total of one day: ")
         else:
             print("There were a total of {} days: ".format(len(results)))
-        for each in results:
-            print("* Date: {date} --- {percent}% errors"
-                  .format(date=each[0], percent=each[1]))
+        for date, percent in results:
+            print("* Date: {d: %Y %B %d} --- {p:.2f}% errors"
+                  .format(d=date, p=percent))
     else:
         print("There were no days that had 1 percent or greater "
               "request errors.")
@@ -99,8 +103,8 @@ def main():
         ORDER BY views DESC
         LIMIT 3;
         """
-    results = execute_query(query_most_popular_articles)
-    display_results_of_views(results)
+    # results = execute_query(query_most_popular_articles)
+    # display_results_of_views(results)
 
     print("Who are the most popular article authors of all time?")
     """Queries the database to return a list of authors and the total number of
@@ -119,10 +123,35 @@ def main():
         ORDER BY total DESC;
         """
 
-    results = execute_query(query_most_popular_authors)
-    display_results_of_views(results)
+    # results = execute_query(query_most_popular_authors)
+    # display_results_of_views(results)
 
     print("On which days did more than 1 percent of requests lead to errors?")
+    """Queries the database to calculate the percentage of errors versus the
+    total of requests per day.
+    """
+    query_percent_of_errors1 = """
+        SELECT to_char(time, 'YYYY-MM-DD') as day_of_month,
+        (SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END)::numeric
+        / COUNT(*) * 100) AS percentage
+        FROM log
+        GROUP BY day_of_month
+        HAVING ((SUM(CASE WHEN status NOT LIKE '2%'
+                   THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1
+        ORDER BY percentage DESC;
+        """
+    query_percent_of_errors = """
+        SELECT time::date as day_of_month,
+        (SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END)::numeric
+        / COUNT(*) * 100) AS percentage
+        FROM log
+        GROUP BY day_of_month
+        HAVING ((SUM(CASE WHEN status NOT LIKE '2%'
+                   THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1
+        ORDER BY percentage DESC;
+        """
+    results = execute_query(query_percent_of_errors)
+    display_results_of_errors(results)
     # display_results_of_errors(get_percent_of_errors())
 
 
