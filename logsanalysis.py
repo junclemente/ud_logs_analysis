@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import sys
 import psycopg2
 
 DBNAME = "news"
@@ -11,17 +11,35 @@ def execute_query(query_param):
     Parameters
     ----------
     query_param: string
-        SQL query statement to be exectued
+        SQL query statement to be executed.
 
     Returns
     -------
     result:
-        List of tuples
+        List of tuples.
 
     Raises
     ------
-
+    Exception
+        Execution will exit if an error is encountered.
     """
+
+    try:
+        db = psycopg2.connect(database=DBNAME)
+        c = db.cursor()
+        c.execute(query_param)
+        result = c.fetchall()
+        db.close()
+        return result
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("*********************************\n"
+              "* An error was encountered.     *\n"
+              "* This program cannot continue. *\n"
+              "*********************************\n"
+              "Error Message:")
+        sys.exit(error)
+
+
 def get_list_of_popular_articles():
     """Queries the database to get a list of article titles and the number of
     times they have been viewed and orders the most popular articles at the top
@@ -38,6 +56,7 @@ def get_list_of_popular_articles():
     result = c.fetchall()
     db.close()
     return result
+
 
 def get_list_of_popular_authors():
     """Queries the database to return a list of authors and the total number of
@@ -97,17 +116,52 @@ def display_results_of_errors(results):
 
 
 def main():
-    """Prints the question being answered and then calls the appropriate
-    function to query the answer.
+    """Prints the question and calls function with proper SQL query.
     """
     print("What are the most popular three articles of all time?")
-    display_results_of_views(get_list_of_popular_articles())
+    query_articles = """
+        SELECT title, views
+        FROM articles
+        INNER JOIN (SELECT path, COUNT(path) AS views
+                    FROM log
+                    GROUP BY path) AS log
+        ON log.path = '/article/' || articles.slug
+        ORDER BY views DESC
+        LIMIT 3;
+        """
+    results = execute_query(query_articles)
+    display_results_of_views(results)
+    # display_results_of_views(get_list_of_popular_articles())
 
     print("Who are the most popular article authors of all time?")
-    display_results_of_views(get_list_of_popular_authors())
+    query_authors1 = """
+        SELECT name, COUNT(*) AS total_views
+        FROM authors, articles, log
+        WHERE '/article/' || slug = path AND authors.id = articles.author
+        GROUP BY name
+        ORDER BY total_views DESC;
+        """
+
+    query_authors = """
+        SELECT name, sum(views) as total
+        FROM authors, articles
+        INNER JOIN (SELECT path, COUNT(path) AS views
+                    FROM log
+                    WHERE status LIKE '2%'
+                    GROUP BY path) AS log
+        ON '/article/' || slug = path
+        WHERE authors.id = articles.author
+        GROUP BY name
+        ORDER BY total DESC;
+        """
+
+
+    results = execute_query(query_authors)
+    display_results_of_views(results)
+    # display_results_of_views(get_list_of_popular_authors())
 
     print("On which days did more than 1 percent of requests lead to errors?")
-    display_results_of_errors(get_percent_of_errors())
+    # display_results_of_errors(get_percent_of_errors())
 
 
 # Call the main function to begin queries and calculations.
