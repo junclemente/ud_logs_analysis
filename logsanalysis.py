@@ -40,24 +40,6 @@ def execute_query(query_param):
         sys.exit(error)
 
 
-def get_percent_of_errors():
-    """Queries the database to calculate the percentage of errors versus the
-    total of requests per day.
-    """
-    db = psycopg2.connect(database=DBNAME)
-    c = db.cursor()
-    c.execute("SELECT to_char(time, 'YYYY-MM-DD') as day_of_month, \
-              ((SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END) * 100) \
-              / COUNT(*)) AS percentage \
-              FROM log \
-              GROUP BY day_of_month \
-              HAVING ((SUM(CASE WHEN status NOT LIKE '2%' \
-                           THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1 \
-              ORDER BY percentage DESC;")
-    return c.fetchall()
-    db.close()
-
-
 def display_results_of_views(results):
     """Displays the results of article views."""
     if len(results) > 0:
@@ -66,7 +48,6 @@ def display_results_of_views(results):
         print("\n")
     else:
         print("There were no results that matched the query.")
-    print("\n")
 
 
 def display_results_of_errors(results):
@@ -82,7 +63,6 @@ def display_results_of_errors(results):
     else:
         print("There were no days that had 1 percent or greater "
               "request errors.")
-    print("\n")
 
 
 def main():
@@ -103,8 +83,8 @@ def main():
         ORDER BY views DESC
         LIMIT 3;
         """
-    # results = execute_query(query_most_popular_articles)
-    # display_results_of_views(results)
+    results = execute_query(query_most_popular_articles)
+    display_results_of_views(results)
 
     print("Who are the most popular article authors of all time?")
     """Queries the database to return a list of authors and the total number of
@@ -122,24 +102,13 @@ def main():
         GROUP BY name
         ORDER BY total DESC;
         """
-
-    # results = execute_query(query_most_popular_authors)
-    # display_results_of_views(results)
+    results = execute_query(query_most_popular_authors)
+    display_results_of_views(results)
 
     print("On which days did more than 1 percent of requests lead to errors?")
     """Queries the database to calculate the percentage of errors versus the
     total of requests per day.
     """
-    query_percent_of_errors1 = """
-        SELECT to_char(time, 'YYYY-MM-DD') as day_of_month,
-        (SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END)::numeric
-        / COUNT(*) * 100) AS percentage
-        FROM log
-        GROUP BY day_of_month
-        HAVING ((SUM(CASE WHEN status NOT LIKE '2%'
-                   THEN 1 ELSE 0 END) * 100)/COUNT(*)) >= 1
-        ORDER BY percentage DESC;
-        """
     query_percent_of_errors = """
         SELECT time::date as day_of_month,
         (SUM(CASE WHEN status NOT LIKE '2%' THEN 1 ELSE 0 END)::numeric
@@ -152,7 +121,6 @@ def main():
         """
     results = execute_query(query_percent_of_errors)
     display_results_of_errors(results)
-    # display_results_of_errors(get_percent_of_errors())
 
 
 # Call the main function to begin queries and calculations.
