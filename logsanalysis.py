@@ -92,7 +92,7 @@ def main():
     most popular author first.
     """
     query_most_popular_authors = """
-        SELECT name, sum(views) as total
+        SELECT name, SUM(views) as total
         FROM authors, articles
         INNER JOIN (SELECT path, COUNT(path) AS views
                     FROM log
